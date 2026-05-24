@@ -18,6 +18,7 @@ Git is for explicit system backups only. Codex must not create a Git commit unle
 - Organized the SSD media root into `Videos/` and `Assets/`.
 - Moved local `02_Assets` to the SSD at `/Volumes/T7 Shield/Leon_IP_Media/Assets`; reusable media assets no longer live in the desktop workspace.
 - Updated LaunchAgent templates and install scripts to use the new `00_System/scripts/ipctl.py` path.
+- Added automatic retry and hourly watchdog backfill for `process-ideas`, so missed 10:00/19:00 runs can be recovered after network or startup failures.
 - Initialized Git for system-layer version control with a whitelist `.gitignore`.
 - Git tracks only automation code, system docs, config templates, field maps, LaunchAgents, and directory README files.
 - Git ignores Word scripts, video/audio/image assets, SSD content, Feishu cache/logs, local credentials, strategy/private files, and analytics content.
@@ -70,6 +71,13 @@ Git is for explicit system backups only. Codex must not create a Git commit unle
 - Summary: Initial system-layer backup after moving infrastructure scripts into `00_System/scripts/`, moving reusable assets to SSD, consolidating Version Log entries, and enforcing Git's system-only whitelist.
 - Rollback hint: use `git restore --source a2c2321ba9310d3d8ab8cb2cf97ac5930a33c799 -- .` to restore the tracked system files from this backup.
 
+#### 2026-05-24 20:44 BST - System Infrastructure V0.5.1 Backup
+
+- Commit: `8978e5f4f73a9c8ba378b64060ada1f9a781af9c`
+- Message: `backup: system infrastructure v0.5.1`
+- Summary: Finalized SSD top-level structure with `/Volumes/T7 Shield/Leon_IP_Media/Videos` and `/Volumes/T7 Shield/Leon_IP_Media/Assets`, updated config templates, Git ignore rules, and operating documentation.
+- Rollback hint: use `git restore --source 8978e5f4f73a9c8ba378b64060ada1f9a781af9c -- .` to restore the tracked system files from this backup.
+
 ## Current Model
 
 - Feishu Base is the source of truth for ideas, pipeline status, publishing fields, links, and reviews.
@@ -100,6 +108,7 @@ Ignored by Git:
 - SSD content under `/Volumes/T7 Shield/Leon_IP_Media`.
 - Local credentials in `00_System/config.local.json`.
 - Feishu caches and logs under `00_System/cache/` and `00_System/logs/`.
+- Runtime success/failure markers under `00_System/state/`.
 - Private strategy/planning files under `00_System/Strategy/`.
 - Local analytics/review notes under `02_Analytics/`.
 
@@ -188,6 +197,8 @@ python3 00_System/scripts/ipctl.py clean-empty-rows
 python3 00_System/scripts/ipctl.py clean-empty-rows --execute
 python3 00_System/scripts/ipctl.py process-ideas
 python3 00_System/scripts/ipctl.py process-ideas --execute
+python3 00_System/scripts/ipctl.py watchdog
+python3 00_System/scripts/ipctl.py watchdog --execute
 python3 00_System/scripts/ipctl.py new-from-idea --title "先完成再迭代"
 python3 00_System/scripts/ipctl.py new-from-idea --title "先完成再迭代" --execute
 python3 00_System/scripts/ipctl.py schedule-week --time-block "2026-05-24T20:00:00+01:00/2026-05-24T22:30:00+01:00"
@@ -230,13 +241,21 @@ Install the scheduled automation:
 00_System/scripts/install_launchagent_process_ideas.sh
 ```
 
-After installation, macOS runs `process-ideas --execute` every day at `10:00` and `19:00`. `RunAtLoad` is enabled, so if the Mac was off or asleep at a scheduled time, it runs once after login/startup. Logs are written to:
+After installation, macOS runs `process-ideas --execute` every day at `10:00` and `19:00`. It retries execute-mode failures up to 3 times with a 5-minute delay. `RunAtLoad` is enabled, so if the Mac was off or asleep at a scheduled time, it runs once after login/startup. Logs are written to:
 
 ```text
 00_System/logs/idea-automation.log
 00_System/logs/launchd-process-ideas.out.log
 00_System/logs/launchd-process-ideas.err.log
 ```
+
+Install the watchdog backfill automation:
+
+```bash
+00_System/scripts/install_launchagent_watchdog.sh
+```
+
+The watchdog runs hourly and checks whether today's `10:00` or `19:00` process window has a successful run in `00_System/state/process_ideas_last_success.json`. If a due window has no success record, it runs `process-ideas --execute` as a safe backfill.
 
 ## SSD Sync
 

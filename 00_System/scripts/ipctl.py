@@ -16,6 +16,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -23,10 +24,13 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 SYSTEM_DIR = ROOT / "00_System"
 CACHE_DIR = SYSTEM_DIR / "cache"
+STATE_DIR = SYSTEM_DIR / "state"
 CONFIG_PATH = SYSTEM_DIR / "config.local.json"
 CONFIG_EXAMPLE_PATH = SYSTEM_DIR / "config.example.json"
 FIELD_MAP_PATH = SYSTEM_DIR / "field_map.json"
 IDEA_AUTOMATION_LOG = SYSTEM_DIR / "logs" / "idea-automation.log"
+LAST_IDEA_SUCCESS_PATH = STATE_DIR / "process_ideas_last_success.json"
+LAST_IDEA_FAILURE_PATH = STATE_DIR / "process_ideas_last_failure.json"
 
 
 TABLE_KEYS = [
@@ -748,7 +752,42 @@ def append_idea_log(summary: dict[str, Any]) -> None:
         f.write("\n")
 
 
-def cmd_process_ideas(args: argparse.Namespace) -> None:
+def write_json_file(path: Path, data: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def read_json_file(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+
+
+def record_process_ideas_success(summary: dict[str, Any]) -> None:
+    write_json_file(
+        LAST_IDEA_SUCCESS_PATH,
+        {
+            "timestamp": dt.datetime.now().isoformat(timespec="seconds"),
+            "summary": summary,
+        },
+    )
+
+
+def record_process_ideas_failure(error: str, *, attempt: int, max_attempts: int) -> None:
+    data = {
+        "timestamp": dt.datetime.now().isoformat(timespec="seconds"),
+        "attempt": attempt,
+        "max_attempts": max_attempts,
+        "error": error,
+    }
+    write_json_file(LAST_IDEA_FAILURE_PATH, data)
+    append_idea_log({"execute": True, "failed": True, **data})
+
+
+def process_ideas_once(args: argparse.Namespace) -> dict[str, Any]:
     config = load_config()
     maps = load_field_map()
     idea_map = maps["ideas_backlog"]
@@ -885,6 +924,94 @@ def cmd_process_ideas(args: argparse.Namespace) -> None:
 
     if args.execute:
         append_idea_log(summary)
+        record_process_ideas_success(summary)
+    return summary
+
+
+def run_process_ideas_with_retries(args: argparse.Namespace) -> dict[str, Any]:
+    max_attempts = (args.retries + 1) if args.execute else 1
+    for attempt in range(1, max_attempts + 1):
+        try:
+            summary = process_ideas_once(args)
+            if args.execute:
+                summary["attempt"] = attempt
+                summary["max_attempts"] = max_attempts
+            return summary
+        except SystemExit as exc:
+            error = f"process-ideas failed with exit code {exc.code}"
+            if args.execute:
+                record_process_ideas_failure(error, attempt=attempt, max_attempts=max_attempts)
+            if attempt >= max_attempts:
+                raise
+            print(f"{error}; retrying in {args.retry_delay} seconds...", file=sys.stderr)
+            time.sleep(args.retry_delay)
+        except Exception as exc:
+            error = f"process-ideas failed: {exc}"
+            if args.execute:
+                record_process_ideas_failure(error, attempt=attempt, max_attempts=max_attempts)
+            if attempt >= max_attempts:
+                die(error)
+            print(f"{error}; retrying in {args.retry_delay} seconds...", file=sys.stderr)
+            time.sleep(args.retry_delay)
+    die("process-ideas failed")
+
+
+def cmd_process_ideas(args: argparse.Namespace) -> None:
+    print_json(run_process_ideas_with_retries(args))
+
+
+def today_local() -> dt.date:
+    return dt.datetime.now().date()
+
+
+def parse_success_timestamp() -> dt.datetime | None:
+    data = read_json_file(LAST_IDEA_SUCCESS_PATH)
+    timestamp = str(data.get("timestamp") or "")
+    if not timestamp:
+        return None
+    try:
+        return dt.datetime.fromisoformat(timestamp)
+    except ValueError:
+        return None
+
+
+def missed_process_ideas_windows(now: dt.datetime) -> list[str]:
+    last_success = parse_success_timestamp()
+    windows = [
+        ("10:00", now.replace(hour=10, minute=0, second=0, microsecond=0)),
+        ("19:00", now.replace(hour=19, minute=0, second=0, microsecond=0)),
+    ]
+    missed: list[str] = []
+    for label, window_start in windows:
+        if now < window_start:
+            continue
+        if not last_success or last_success < window_start:
+            missed.append(label)
+    return missed
+
+
+def cmd_watchdog(args: argparse.Namespace) -> None:
+    now = dt.datetime.now()
+    missed = missed_process_ideas_windows(now)
+    summary: dict[str, Any] = {
+        "execute": args.execute,
+        "checked_at": now.isoformat(timespec="seconds"),
+        "last_success": read_json_file(LAST_IDEA_SUCCESS_PATH),
+        "missed_windows": missed,
+        "action": "none",
+    }
+    if missed:
+        summary["action"] = "process-ideas"
+        if args.execute:
+            process_args = argparse.Namespace(
+                limit=args.limit,
+                execute=True,
+                retries=args.retries,
+                retry_delay=args.retry_delay,
+            )
+            summary["process_ideas_result"] = run_process_ideas_with_retries(process_args)
+        else:
+            summary["dry_run_note"] = "Would run process-ideas --execute."
     print_json(summary)
 
 
@@ -1200,7 +1327,16 @@ def build_parser() -> argparse.ArgumentParser:
     process = sub.add_parser("process-ideas", help="Auto-clean Ideas Backlog and promote Selected ideas")
     process.add_argument("--limit", type=int, default=200)
     process.add_argument("--execute", action="store_true", help="Actually update Feishu and create folders")
+    process.add_argument("--retries", type=int, default=3, help="Retry count for execute mode failures")
+    process.add_argument("--retry-delay", type=int, default=300, help="Seconds to wait between retries")
     process.set_defaults(func=cmd_process_ideas)
+
+    watchdog = sub.add_parser("watchdog", help="Backfill missed Ideas automation windows")
+    watchdog.add_argument("--limit", type=int, default=200)
+    watchdog.add_argument("--execute", action="store_true", help="Actually backfill by running process-ideas")
+    watchdog.add_argument("--retries", type=int, default=3, help="Retry count for backfill failures")
+    watchdog.add_argument("--retry-delay", type=int, default=300, help="Seconds to wait between retries")
+    watchdog.set_defaults(func=cmd_watchdog)
 
     clean_rows = sub.add_parser("clean-empty-rows", help="Delete fully empty Feishu Base records")
     clean_rows.add_argument("--table", choices=["ideas_backlog", "content_pipeline"], action="append")

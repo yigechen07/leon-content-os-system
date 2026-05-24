@@ -29,6 +29,7 @@ __pycache__/
 00_System/config.local.json
 00_System/cache/
 00_System/logs/
+00_System/state/
 00_System/Strategy/
 00_System/sync_log.md
 01_Videos/*
