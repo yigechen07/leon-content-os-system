@@ -15,7 +15,8 @@ Git is for explicit system backups only. Codex must not create a Git commit unle
 ### 2026-05-24 20:44 BST - V0.5 Infrastructure Consolidation and Git Backup System
 
 - Moved all local automation scripts into `00_System/scripts/` so system infrastructure lives under `00_System`.
-- Moved local `02_Assets` to the SSD at `/Volumes/T7 Shield/Leon_IP_Media/02_Assets`; reusable media assets no longer live in the desktop workspace.
+- Organized the SSD media root into `Videos/` and `Assets/`.
+- Moved local `02_Assets` to the SSD at `/Volumes/T7 Shield/Leon_IP_Media/Assets`; reusable media assets no longer live in the desktop workspace.
 - Updated LaunchAgent templates and install scripts to use the new `00_System/scripts/ipctl.py` path.
 - Initialized Git for system-layer version control with a whitelist `.gitignore`.
 - Git tracks only automation code, system docs, config templates, field maps, LaunchAgents, and directory README files.
@@ -35,7 +36,7 @@ Git is for explicit system backups only. Codex must not create a Git commit unle
 
 ### 2026-05-24 20:15 BST - V0.3 SSD Media Sync and Workspace Cleanup
 
-- Added `sync-ssd` to mirror local video folders to `/Volumes/T7 Shield/Leon_IP_Media`.
+- Added `sync-ssd` to mirror local video folders to `/Volumes/T7 Shield/Leon_IP_Media/Videos`.
 - SSD video folders contain only the video folder root, one `Exports/` folder, media files, and `.docx` script backups.
 - Local Word scripts remain the source of truth; SSD scripts are backups only.
 - Installed `com.leon.ip.sync-ssd` to run automatically when a volume is mounted.
@@ -62,14 +63,19 @@ Git is for explicit system backups only. Codex must not create a Git commit unle
 
 ### Git Backups
 
-- No Git backup commit has been recorded yet. When the user asks to back up the current version, record the commit time, commit hash, commit message, backup summary, and rollback hint here.
+#### 2026-05-24 20:44 BST - System Infrastructure V0.5 Backup
+
+- Commit: `a2c2321ba9310d3d8ab8cb2cf97ac5930a33c799`
+- Message: `backup: system infrastructure v0.5`
+- Summary: Initial system-layer backup after moving infrastructure scripts into `00_System/scripts/`, moving reusable assets to SSD, consolidating Version Log entries, and enforcing Git's system-only whitelist.
+- Rollback hint: use `git restore --source a2c2321ba9310d3d8ab8cb2cf97ac5930a33c799 -- .` to restore the tracked system files from this backup.
 
 ## Current Model
 
 - Feishu Base is the source of truth for ideas, pipeline status, publishing fields, links, and reviews.
 - Feishu Calendar is the time layer for creation and publishing blocks.
 - Local folders under `/Users/yige/Desktop/IP` store the system files and each video's Word script.
-- The SSD at `/Volumes/T7 Shield/Leon_IP_Media` stores video media, final exports, reusable assets, and script backups.
+- The SSD at `/Volumes/T7 Shield/Leon_IP_Media` stores video media and reusable assets under separate `Videos/` and `Assets/` folders.
 - `00_System/scripts/ipctl.py` is the local controller that Codex can run.
 
 ## Git Backup Policy
@@ -90,11 +96,12 @@ Tracked by Git:
 Ignored by Git:
 
 - Video Word scripts and all video project contents under `01_Videos/V*/`.
-- Reusable media assets under `/Volumes/T7 Shield/Leon_IP_Media/02_Assets`.
+- Reusable media assets under `/Volumes/T7 Shield/Leon_IP_Media/Assets`.
 - SSD content under `/Volumes/T7 Shield/Leon_IP_Media`.
 - Local credentials in `00_System/config.local.json`.
 - Feishu caches and logs under `00_System/cache/` and `00_System/logs/`.
 - Private strategy/planning files under `00_System/Strategy/`.
+- Local analytics/review notes under `02_Analytics/`.
 
 Codex must not create Git commits automatically. A commit is only allowed when the user explicitly asks to back up or commit the current system version. Every Git backup commit must be recorded in the Version Log with its commit hash, message, summary, and rollback hint.
 
@@ -233,16 +240,16 @@ After installation, macOS runs `process-ideas --execute` every day at `10:00` an
 
 ## SSD Sync
 
-The SSD media root is configured as:
+The SSD video media root is configured as:
 
 ```text
-/Volumes/T7 Shield/Leon_IP_Media
+/Volumes/T7 Shield/Leon_IP_Media/Videos
 ```
 
 Reusable assets live on the SSD:
 
 ```text
-/Volumes/T7 Shield/Leon_IP_Media/02_Assets
+/Volumes/T7 Shield/Leon_IP_Media/Assets
 ├── Music/
 ├── Covers/
 └── Reusable_Broll/
@@ -288,7 +295,7 @@ The Word document is the script source of truth. Codex should not create Brief, 
 The SSD folder is also simple:
 
 ```text
-/Volumes/T7 Shield/Leon_IP_Media/V001_短标题/
+/Volumes/T7 Shield/Leon_IP_Media/Videos/V001_短标题/
 ├── 短标题_script.docx
 └── Exports/
 ```

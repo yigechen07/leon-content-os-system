@@ -1,8 +1,8 @@
 {
   "workspace_root": "/Users/yige/Desktop/IP",
   "content_root": "01_Videos",
-  "media_root": "/Volumes/T7 Shield/Leon_IP_Media",
-  "asset_root": "/Volumes/T7 Shield/Leon_IP_Media/02_Assets",
+  "media_root": "/Volumes/T7 Shield/Leon_IP_Media/Videos",
+  "asset_root": "/Volumes/T7 Shield/Leon_IP_Media/Assets",
   "base_token": "replace_with_leon_content_os_base_token",
   "base_tokens": {
     "content_pipeline": "replace_with_content_pipeline_base_token",

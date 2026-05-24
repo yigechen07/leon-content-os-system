@@ -34,5 +34,6 @@ __pycache__/
 01_Videos/*
 !01_Videos/README.md
 02_Assets/
+02_Analytics/
 03_Analytics/
 05_Analytics/
