@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.leon.ip.sync-ssd</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/anaconda3/bin/python3</string>
+    <string>/Users/yige/Desktop/IP/00_System/scripts/ipctl.py</string>
+    <string>sync-ssd</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/yige/Desktop/IP</string>
+
+  <key>StartOnMount</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>/Users/yige/Desktop/IP/00_System/logs/launchd-sync-ssd.out.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/Users/yige/Desktop/IP/00_System/logs/launchd-sync-ssd.err.log</string>
+</dict>
+</plist>

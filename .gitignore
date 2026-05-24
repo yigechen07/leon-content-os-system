@@ -1,0 +1,38 @@
+# Default: ignore everything. Git is only for the system layer.
+*
+
+# Track the Git rules themselves.
+!.gitignore
+
+# Track system docs, templates, field maps, and LaunchAgents.
+!00_System/
+!00_System/README.md
+!00_System/config.example.json
+!00_System/field_map.json
+!00_System/launchd/
+!00_System/launchd/*.plist
+!00_System/scripts/
+!00_System/scripts/ipctl.py
+!00_System/scripts/install_launchagent_*.sh
+
+# Track directory-level operating notes only.
+!01_Videos/
+!01_Videos/README.md
+
+# Private/generated/system noise.
+.DS_Store
+._*
+__pycache__/
+*.pyc
+
+# Local credentials, caches, logs, strategy docs, assets, and content files.
+00_System/config.local.json
+00_System/cache/
+00_System/logs/
+00_System/Strategy/
+00_System/sync_log.md
+01_Videos/*
+!01_Videos/README.md
+02_Assets/
+03_Analytics/
+05_Analytics/

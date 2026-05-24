@@ -1,0 +1,52 @@
+{
+  "content_pipeline": {
+    "record_id": "_record_id",
+    "video_id": "Video ID",
+    "title": "标题",
+    "column": "栏目",
+    "status": "状态",
+    "content_level": "内容等级",
+    "platforms": "平台",
+    "publish_date": "发布日期",
+    "xiaohongshu_url": "小红书链接",
+    "douyin_url": "抖音链接",
+    "videohao_url": "视频号链接",
+    "review_status": "复盘状态"
+  },
+  "ideas_backlog": {
+    "record_id": "_record_id",
+    "id": "ID",
+    "idea": "选题",
+    "column": "栏目",
+    "status": "状态"
+  },
+  "weekly_plan": {
+    "record_id": "_record_id",
+    "week": "周次",
+    "content_1": "内容 1",
+    "content_2": "内容 2",
+    "creation_block": "创作时间块",
+    "publish_status": "发布状态",
+    "review_notes": "复盘结论"
+  },
+  "scripts_library": {
+    "record_id": "_record_id",
+    "title": "标题",
+    "hook": "Hook",
+    "script_path": "脚本路径",
+    "version": "版本",
+    "recorded": "是否录制"
+  },
+  "analytics_review": {
+    "record_id": "_record_id",
+    "video_id": "Video ID",
+    "platform": "平台",
+    "views": "播放",
+    "likes": "点赞",
+    "saves": "收藏",
+    "comments": "评论",
+    "performance": "表现判断",
+    "reuse_points": "可复用点",
+    "next_optimization": "下次优化"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "workspace_root": "/Users/yige/Desktop/IP",
+  "content_root": "01_Videos",
+  "media_root": "/Volumes/T7 Shield/Leon_IP_Media",
+  "asset_root": "/Volumes/T7 Shield/Leon_IP_Media/02_Assets",
+  "base_token": "replace_with_leon_content_os_base_token",
+  "base_tokens": {
+    "content_pipeline": "replace_with_content_pipeline_base_token",
+    "ideas_backlog": "replace_with_ideas_backlog_base_token"
+  },
+  "calendar_id": "primary",
+  "identity": "user",
+  "timezone": "Europe/London",
+  "tables": {
+    "content_pipeline": "Content Pipeline",
+    "ideas_backlog": "Ideas Backlog",
+    "weekly_plan": "Weekly Plan",
+    "scripts_library": "Scripts Library",
+    "analytics_review": "Analytics Review"
+  },
+  "default_platforms": ["小红书", "抖音", "视频号"],
+  "default_content_level": "M",
+  "status_order": [
+    "Idea",
+    "Brief",
+    "Script",
+    "Recorded",
+    "Editing",
+    "Scheduled",
+    "Posted",
+    "Reviewed",
+    "Archived"
+  ]
+}
